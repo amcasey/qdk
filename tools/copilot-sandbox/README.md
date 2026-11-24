@@ -394,7 +394,8 @@ Inputs:
 - `command`: a Bash command to run in the sandbox from `/work/qdk`, such as `cargo build --release -p qdk --lib` to time an offline build.
 - `relax-userns`: turns off Ubuntu's AppArmor restriction on unprivileged user namespaces, in case rootless Podman needs it.
 - `fuse-overlayfs`: in the run job, stores images with fuse-overlayfs.
-  Native overlay may copy the agent image for its `--userns=keep-id` mapping, which costs time and disk; fuse-overlayfs shouldn't.
+  With native overlay, Podman copies the agent image for its `--userns=keep-id` mapping: on ubuntu-24.04 that took about 4 GB and 27 s per run.
+  fuse-overlayfs presents the layers under the new mapping without copying them.
 
 The workflow sets `cache-mode: none`, so it can't write the caches other workflows restore, and it keeps the runner from acting on workflow commands in sandbox output.
 The `sandbox-output` artifact is untrusted, like any other sandbox output.

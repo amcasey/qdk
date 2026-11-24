@@ -57,7 +57,7 @@ endgroup
 # temporary directory: plan against the documented runner SSD, not any extra space a host has.
 group "Storage"
 scratch=$RUNNER_TEMP/sandbox
-mkdir -p "$scratch/storage" "$scratch/tmp" "$HOME/.config/containers"
+mkdir -p "$scratch/storage" "$HOME/.config/containers"
 printf '[storage]\ndriver = "overlay"\ngraphroot = "%s"\n' "$scratch/storage" \
     > "$HOME/.config/containers/storage.conf"
 if [[ $fuse_overlayfs == true ]]; then
@@ -66,11 +66,12 @@ if [[ $fuse_overlayfs == true ]]; then
     echo "Using fuse-overlayfs."
 fi
 baseline=$(df --output=used -B1 "$scratch" | tail -n 1)
+# Leave TMPDIR alone: the crun with Podman 5.7 (ubuntu-26.04) puts mount points there, and a
+# TMPDIR under /home/runner is out of reach of containers that don't map the runner's user,
+# such as the proxy.
 {
     echo "SANDBOX_SCRATCH=$scratch"
     echo "SANDBOX_DISK_BASELINE=$baseline"
-    # Buildah stages layers in TMPDIR.
-    echo "TMPDIR=$scratch/tmp"
 } >> "$GITHUB_ENV"
 echo "Podman storage: $scratch/storage"
 # Record the peak disk use until the job ends; disk-report.sh reads it.

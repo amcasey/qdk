@@ -107,9 +107,13 @@ jobs:
           path: ${{ env.SANDBOX_SCRATCH }}/images
       - name: Load images
         run: |
-          # The archive isn't needed once loaded, and the runner's documented disk is small.
-          tools/copilot-sandbox/ci/timed.sh "Decompress and load images" \
-            bash -c 'set -o pipefail; zstd -dc "$1" | podman load && rm "$1"' load "$SANDBOX_SCRATCH/images/images.tar.zst"
+          # Loading from a pipe makes Podman copy the whole archive to a temporary file first, so
+          # decompress to a file instead, and delete each copy as soon as it's no longer needed.
+          tools/copilot-sandbox/ci/timed.sh "Decompress and load images" bash -c '
+            set -euo pipefail
+            zstd -d -q --rm "$1" -o "${1%.zst}"
+            podman load -i "${1%.zst}"
+            rm "${1%.zst}"' load "$SANDBOX_SCRATCH/images/images.tar.zst"
       - name: Run the command in the sandbox
         env:
           SANDBOX_COMMAND: ${{ inputs.command }}
