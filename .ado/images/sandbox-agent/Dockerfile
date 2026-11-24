@@ -89,11 +89,13 @@ WORKDIR /work
 
 # Make sure the QDK still builds locked down
 FROM runtime-base AS verify
+# One real build, offline, proves prepare downloaded enough. QDK_BUILD_ARGS chose which
+# dependencies to install; running the tests here would only slow the image build.
 RUN --network=none --mount=type=bind,from=qdk,source=qdk,target=/qdk,readonly \
     bash -c 'source /opt/sandbox/runtime/entrypoint.sh; verify_policy' \
     && /opt/qdk-venv/bin/qir-runner --version \
-    && bash /opt/sandbox/scripts/build_qdk.sh \
-    && printf '%s\n' "$QDK_BUILD_ARGS" > /tmp/offline-verified \
+    && bash /opt/sandbox/scripts/build_qdk.sh --no-test --no-check \
+    && printf '%s --no-test --no-check\n' "$QDK_BUILD_ARGS" > /tmp/offline-verified \
     && chmod 0444 /tmp/offline-verified
 
 # Actual image for running copilot

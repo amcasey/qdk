@@ -15,7 +15,7 @@ on:
           - ubuntu-26.04
         default: ubuntu-24.04
       build-args:
-        description: build.py arguments whose dependencies the agent image bakes in (blank for the default)
+        description: build.py arguments whose dependencies the image installs (blank for the default; not --deps-only)
         type: string
         default: --qdk --cli
       command:

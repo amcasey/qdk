@@ -65,4 +65,5 @@ python -m pip install --only-binary=:all: "$qirrunner_requirement"
 cd /opt/sandbox/copilot
 npm ci --ignore-scripts --no-audit --no-fund
 ./node_modules/.bin/copilot --version
-bash /opt/sandbox/scripts/build_qdk.sh
+# Only download dependencies; the image's verify stage proves an offline build with them.
+bash /opt/sandbox/scripts/build_qdk.sh --deps-only

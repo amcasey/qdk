@@ -292,7 +292,10 @@ Local images can be built without using any Microsoft-internal resources.
 .venv/bin/python tools/copilot-sandbox/build_images.py --package-source public
 ```
 
-By default, it will build (and thus, pre-download dependencies) for only the QDK (e.g. not VS Code).
+By default, it downloads the dependencies of only the QDK (e.g. not VS Code) with `build.py --qdk --cli --deps-only`.
+The image's verify stage then builds the QDK once, without network access, using `--no-test --no-check`, to prove those dependencies are enough.
+The build arguments decide which dependencies get installed, so `--no-test` also leaves out test dependencies such as `pyqir`.
+Don't pass `--deps-only` yourself; the verify stage would then check nothing.
 
 If you want to support more or less of the repo, you can pass your own build arguments:
 
@@ -387,7 +390,7 @@ The setup script also reports the host facts the sandbox depends on, such as Pod
 Inputs:
 
 - `runner`: `ubuntu-24.04` (Podman 4.9) or `ubuntu-26.04` (Podman 5.7).
-- `build-args`: `build.py` arguments whose dependencies the agent image bakes in.
+- `build-args`: `build.py` arguments whose dependencies the agent image installs (see [Local (Public Feeds)](#local-public-feeds)). `qdk`'s runtime dependency `pyqir` comes with the test dependencies, so avoid `--no-test` if the sandbox will run `qdk` Python code.
 - `command`: a Bash command to run in the sandbox from `/work/qdk`, such as `cargo build --release -p qdk --lib` to time an offline build.
 - `relax-userns`: turns off Ubuntu's AppArmor restriction on unprivileged user namespaces, in case rootless Podman needs it.
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
+# Builds a copy of the QDK with QDK_BUILD_ARGS plus any arguments given here, such as --deps-only.
 set -euo pipefail
 repo=$(mktemp -d /var/tmp/qdk.XXXXXX)
 trap 'rm -rf "$repo"' EXIT
 tar -C /qdk --exclude=.git --exclude=target --exclude=node_modules --exclude=.venv --exclude=__pycache__ -cf - . | tar -C "$repo" -xf -
 cd "$repo"
-python - <<'PY'
+python - "$@" <<'PY'
 import json
 import os
 import subprocess
@@ -18,5 +19,5 @@ subprocess.run(
     check=True,
     env={**os.environ, "BUILD_NUMBER": "0", "BUILD_TYPE": "dev"},
 )
-subprocess.run([sys.executable, "build.py", *arguments], check=True)
+subprocess.run([sys.executable, "build.py", *arguments, *sys.argv[1:]], check=True)
 PY
