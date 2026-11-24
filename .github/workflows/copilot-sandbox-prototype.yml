@@ -26,6 +26,10 @@ on:
         description: Turn off Ubuntu's AppArmor restriction on unprivileged user namespaces
         type: boolean
         default: false
+      fuse-overlayfs:
+        description: (Run job only) Store images with fuse-overlayfs, which may avoid copying them for the agent's ID mapping
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -41,6 +45,7 @@ defaults:
 env:
   RUNNER_LABEL: ${{ inputs.runner }}
   RELAX_USERNS: ${{ inputs.relax-userns }}
+  FUSE_OVERLAYFS: ${{ inputs.fuse-overlayfs }}
   # Keeps the launcher's progress lines in order with sandbox output, so log timestamps are accurate.
   PYTHONUNBUFFERED: "1"
 
@@ -95,15 +100,16 @@ jobs:
       - name: Set up rootless Podman
         run: |
           echo "### Run on $RUNNER_LABEL" >> "$GITHUB_STEP_SUMMARY"
-          tools/copilot-sandbox/ci/timed.sh "Set up Podman" tools/copilot-sandbox/ci/setup-podman.sh "$RELAX_USERNS"
+          tools/copilot-sandbox/ci/timed.sh "Set up Podman" tools/copilot-sandbox/ci/setup-podman.sh "$RELAX_USERNS" "$FUSE_OVERLAYFS"
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: sandbox-images
           path: ${{ env.SANDBOX_SCRATCH }}/images
       - name: Load images
         run: |
+          # The archive isn't needed once loaded, and the runner's documented disk is small.
           tools/copilot-sandbox/ci/timed.sh "Decompress and load images" \
-            bash -c 'set -o pipefail; zstd -dc "$1" | podman load' load "$SANDBOX_SCRATCH/images/images.tar.zst"
+            bash -c 'set -o pipefail; zstd -dc "$1" | podman load && rm "$1"' load "$SANDBOX_SCRATCH/images/images.tar.zst"
       - name: Run the command in the sandbox
         env:
           SANDBOX_COMMAND: ${{ inputs.command }}

@@ -384,7 +384,7 @@ It never runs Copilot and requests no Copilot permission.
 1. The run job, on a fresh runner, loads the images and runs `sandbox.py run --local --no-token` with the requested command.
    It uploads the sandbox's `/exchange/from_copilot` as the `sandbox-output` artifact.
 
-Each job's summary lists the duration of its main steps, the image sizes, and the job's peak disk use against the 14 GB of SSD GitHub documents for standard runners.
+Each job's summary lists the duration of its main steps, the image sizes, and the job's peak disk use against the 14 GB of SSD GitHub documents for standard runners, with a per-directory breakdown at the end of the job.
 The setup script also reports the host facts the sandbox depends on, such as Podman's version, network command, and cgroup delegation, and starts a container with the agent's restrictions before the long build.
 
 Inputs:
@@ -393,6 +393,8 @@ Inputs:
 - `build-args`: `build.py` arguments whose dependencies the agent image installs (see [Local (Public Feeds)](#local-public-feeds)). `qdk`'s runtime dependency `pyqir` comes with the test dependencies, so avoid `--no-test` if the sandbox will run `qdk` Python code.
 - `command`: a Bash command to run in the sandbox from `/work/qdk`, such as `cargo build --release -p qdk --lib` to time an offline build.
 - `relax-userns`: turns off Ubuntu's AppArmor restriction on unprivileged user namespaces, in case rootless Podman needs it.
+- `fuse-overlayfs`: in the run job, stores images with fuse-overlayfs.
+  Native overlay may copy the agent image for its `--userns=keep-id` mapping, which costs time and disk; fuse-overlayfs shouldn't.
 
 The workflow sets `cache-mode: none`, so it can't write the caches other workflows restore, and it keeps the runner from acting on workflow commands in sandbox output.
 The `sandbox-output` artifact is untrusted, like any other sandbox output.
