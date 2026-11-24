@@ -194,8 +194,8 @@ fn evaluation_order_logical_and_rhs_assignment_remains_conditional() {
             block_1:
               br label %block_2
             block_2:
-              %var_8 = phi i64 [4, %block_0], [0, %block_1]
-              %var_6 = icmp eq i64 %var_8, 4
+              %var_7 = phi i64 [4, %block_0], [0, %block_1]
+              %var_6 = icmp eq i64 %var_7, 4
               call void @__quantum__rt__bool_record_output(i1 zeroext %var_6, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
@@ -248,57 +248,45 @@ fn evaluation_order_logical_or_rhs_assignment_remains_conditional() {
             block_1:
               br label %block_2
             block_2:
-              %var_8 = phi i64 [4, %block_0], [0, %block_1]
-              %var_6 = icmp eq i64 %var_8, 4
+              %var_7 = phi i64 [4, %block_0], [0, %block_1]
+              %var_6 = icmp eq i64 %var_7, 4
               call void @__quantum__rt__bool_record_output(i1 zeroext %var_6, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
             block_0:
               %var_0 = alloca i64
-              %var_5 = alloca i64
-              %var_7 = alloca i1
               call void @__quantum__rt__initialize(ptr null)
               store i64 4, ptr %var_0
               call void @__quantum__qis__mresetz__body(ptr inttoptr (i64 0 to ptr), ptr inttoptr (i64 0 to ptr))
               %var_1 = call zeroext i1 @__quantum__rt__read_result(ptr inttoptr (i64 0 to ptr))
               %var_2 = icmp eq i1 %var_1, false
-              br i1 %var_2, label %block_2, label %block_1
+              br i1 %var_2, label %block_1, label %block_2
             block_1:
-              store i64 0, ptr %var_0
-              br label %block_2
+              %var_5 = load i64, ptr %var_0
+              %var_6 = icmp eq i64 %var_5, 4
+              call void @__quantum__rt__bool_record_output(i1 zeroext %var_6, ptr @0)
+              ret i64 0
             block_2:
-              %var_10 = load i64, ptr %var_0
-              store i64 %var_10, ptr %var_5
-              %var_12 = load i64, ptr %var_5
-              %var_6 = icmp eq i64 %var_12, 4
-              store i1 %var_6, ptr %var_7
-              %var_14 = load i1, ptr %var_7
-              call void @__quantum__rt__bool_record_output(i1 zeroext %var_14, ptr @0)
-              ret i64 0"#]],
+              store i64 0, ptr %var_0
+              br label %block_1"#]],
         &expect![[r#"
             block_0:
               %var_1 = alloca i64
-              %var_6 = alloca i64
-              %var_8 = alloca i1
               call void @__quantum__rt__initialize(ptr null)
               call void @X(ptr inttoptr (i64 0 to ptr))
               store i64 4, ptr %var_1
               call void @__quantum__qis__mresetz__body(ptr inttoptr (i64 0 to ptr), ptr inttoptr (i64 0 to ptr))
               %var_2 = call zeroext i1 @__quantum__rt__read_result(ptr inttoptr (i64 0 to ptr))
               %var_3 = icmp eq i1 %var_2, false
-              br i1 %var_3, label %block_2, label %block_1
+              br i1 %var_3, label %block_1, label %block_2
             block_1:
-              store i64 0, ptr %var_1
-              br label %block_2
+              %var_6 = load i64, ptr %var_1
+              %var_7 = icmp eq i64 %var_6, 4
+              call void @__quantum__rt__bool_record_output(i1 zeroext %var_7, ptr @0)
+              ret i64 0
             block_2:
-              %var_11 = load i64, ptr %var_1
-              store i64 %var_11, ptr %var_6
-              %var_13 = load i64, ptr %var_6
-              %var_7 = icmp eq i64 %var_13, 4
-              store i1 %var_7, ptr %var_8
-              %var_15 = load i1, ptr %var_8
-              call void @__quantum__rt__bool_record_output(i1 zeroext %var_15, ptr @0)
-              ret i64 0"#]],
+              store i64 0, ptr %var_1
+              br label %block_1"#]],
     );
 }
 
@@ -315,8 +303,8 @@ fn evaluation_order_compound_and_rhs_assignment_remains_conditional() {
             block_1:
               br label %block_2
             block_2:
-              %var_9 = phi i64 [4, %block_0], [0, %block_1]
-              %var_7 = icmp eq i64 %var_9, 4
+              %var_8 = phi i64 [4, %block_0], [0, %block_1]
+              %var_7 = icmp eq i64 %var_8, 4
               call void @__quantum__rt__bool_record_output(i1 zeroext %var_7, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
@@ -369,57 +357,45 @@ fn evaluation_order_compound_or_rhs_assignment_remains_conditional() {
             block_1:
               br label %block_2
             block_2:
-              %var_9 = phi i64 [4, %block_0], [0, %block_1]
-              %var_7 = icmp eq i64 %var_9, 4
+              %var_8 = phi i64 [4, %block_0], [0, %block_1]
+              %var_7 = icmp eq i64 %var_8, 4
               call void @__quantum__rt__bool_record_output(i1 zeroext %var_7, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
             block_0:
               %var_0 = alloca i64
-              %var_6 = alloca i64
-              %var_8 = alloca i1
               call void @__quantum__rt__initialize(ptr null)
               store i64 4, ptr %var_0
               call void @__quantum__qis__mresetz__body(ptr inttoptr (i64 0 to ptr), ptr inttoptr (i64 0 to ptr))
               %var_1 = call zeroext i1 @__quantum__rt__read_result(ptr inttoptr (i64 0 to ptr))
               %var_2 = icmp eq i1 %var_1, false
-              br i1 %var_2, label %block_2, label %block_1
+              br i1 %var_2, label %block_1, label %block_2
             block_1:
-              store i64 0, ptr %var_0
-              br label %block_2
+              %var_6 = load i64, ptr %var_0
+              %var_7 = icmp eq i64 %var_6, 4
+              call void @__quantum__rt__bool_record_output(i1 zeroext %var_7, ptr @0)
+              ret i64 0
             block_2:
-              %var_11 = load i64, ptr %var_0
-              store i64 %var_11, ptr %var_6
-              %var_13 = load i64, ptr %var_6
-              %var_7 = icmp eq i64 %var_13, 4
-              store i1 %var_7, ptr %var_8
-              %var_15 = load i1, ptr %var_8
-              call void @__quantum__rt__bool_record_output(i1 zeroext %var_15, ptr @0)
-              ret i64 0"#]],
+              store i64 0, ptr %var_0
+              br label %block_1"#]],
         &expect![[r#"
             block_0:
               %var_1 = alloca i64
-              %var_7 = alloca i64
-              %var_9 = alloca i1
               call void @__quantum__rt__initialize(ptr null)
               call void @X(ptr inttoptr (i64 0 to ptr))
               store i64 4, ptr %var_1
               call void @__quantum__qis__mresetz__body(ptr inttoptr (i64 0 to ptr), ptr inttoptr (i64 0 to ptr))
               %var_2 = call zeroext i1 @__quantum__rt__read_result(ptr inttoptr (i64 0 to ptr))
               %var_3 = icmp eq i1 %var_2, false
-              br i1 %var_3, label %block_2, label %block_1
+              br i1 %var_3, label %block_1, label %block_2
             block_1:
-              store i64 0, ptr %var_1
-              br label %block_2
+              %var_7 = load i64, ptr %var_1
+              %var_8 = icmp eq i64 %var_7, 4
+              call void @__quantum__rt__bool_record_output(i1 zeroext %var_8, ptr @0)
+              ret i64 0
             block_2:
-              %var_12 = load i64, ptr %var_1
-              store i64 %var_12, ptr %var_7
-              %var_14 = load i64, ptr %var_7
-              %var_8 = icmp eq i64 %var_14, 4
-              store i1 %var_8, ptr %var_9
-              %var_16 = load i1, ptr %var_9
-              call void @__quantum__rt__bool_record_output(i1 zeroext %var_16, ptr @0)
-              ret i64 0"#]],
+              store i64 0, ptr %var_1
+              br label %block_1"#]],
     );
 }
 
@@ -661,8 +637,8 @@ fn evaluation_order_short_circuit_double_assignment_then_arithmetic() {
         block_1:
           br label %block_2
         block_2:
-          %var_8 = phi double [4.0, %block_0], [0.0, %block_1]
-          %var_6 = fdiv double %var_8, 2.0
+          %var_7 = phi double [4.0, %block_0], [0.0, %block_1]
+          %var_6 = fdiv double %var_7, 2.0
           call void @__quantum__rt__double_record_output(double %var_6, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
           ret i64 0"#]];
     let adaptive = expect![[r#"
@@ -802,8 +778,8 @@ fn evaluation_order_array_concatenation_snapshots_left_operand_before_rhs_mutati
             block_2:
               br label %block_3
             block_3:
-              %var_5 = phi i64 [4, %block_1], [5, %block_2]
-              call void @__quantum__rt__int_record_output(i64 %var_5, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
+              %var_4 = phi i64 [4, %block_1], [5, %block_2]
+              call void @__quantum__rt__int_record_output(i64 %var_4, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
             block_0:
@@ -861,8 +837,8 @@ fn evaluation_order_array_indexing_snapshots_array_before_index_mutation() {
             block_2:
               br label %block_3
             block_3:
-              %var_5 = phi i64 [4, %block_1], [5, %block_2]
-              call void @__quantum__rt__int_record_output(i64 %var_5, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
+              %var_4 = phi i64 [4, %block_1], [5, %block_2]
+              call void @__quantum__rt__int_record_output(i64 %var_4, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
             block_0:
@@ -920,8 +896,8 @@ fn evaluation_order_array_repetition_snapshots_value_before_size_mutation() {
             block_2:
               br label %block_3
             block_3:
-              %var_5 = phi i64 [4, %block_1], [5, %block_2]
-              call void @__quantum__rt__int_record_output(i64 %var_5, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
+              %var_4 = phi i64 [4, %block_1], [5, %block_2]
+              call void @__quantum__rt__int_record_output(i64 %var_4, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
             block_0:
@@ -979,8 +955,8 @@ fn evaluation_order_array_literal_snapshots_element_before_later_element_mutatio
             block_2:
               br label %block_3
             block_3:
-              %var_5 = phi i64 [4, %block_1], [5, %block_2]
-              call void @__quantum__rt__int_record_output(i64 %var_5, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
+              %var_4 = phi i64 [4, %block_1], [5, %block_2]
+              call void @__quantum__rt__int_record_output(i64 %var_4, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
             block_0:
@@ -1155,16 +1131,16 @@ fn evaluation_order_effectful_callable_and_replacement() {
             block_1:
               br label %block_2
             block_2:
-              %var_12 = phi i64 [0, %block_0], [7, %block_1]
+              %var_11 = phi i64 [0, %block_0], [7, %block_1]
               br i1 %var_0, label %block_3, label %block_4
             block_3:
               br label %block_5
             block_4:
               br label %block_5
             block_5:
-              %var_13 = phi i64 [12, %block_3], [11, %block_4]
-              %var_8 = mul i64 %var_13, 100
-              %var_10 = add i64 %var_8, %var_12
+              %var_12 = phi i64 [12, %block_3], [11, %block_4]
+              %var_8 = mul i64 %var_12, 100
+              %var_10 = add i64 %var_8, %var_11
               call void @__quantum__rt__int_record_output(i64 %var_10, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
             &expect![[r#"
@@ -1222,13 +1198,13 @@ fn evaluation_order_effectful_callable_or_replacement() {
               store i1 %var_1, ptr %var_3
               store i64 0, ptr %var_4
               %var_5 = load i1, ptr %var_3
-              br i1 %var_5, label %block_2, label %block_1
+              br i1 %var_5, label %block_1, label %block_2
             block_1:
-              store i64 7, ptr %var_4
-              br label %block_2
-            block_2:
               %var_15 = load i1, ptr %var_3
               br i1 %var_15, label %block_3, label %block_4
+            block_2:
+              store i64 7, ptr %var_4
+              br label %block_1
             block_3:
               store i64 11, ptr %var_7
               br label %block_5
@@ -1251,17 +1227,16 @@ fn evaluation_order_effectful_callable_or_replacement() {
             block_1:
               br label %block_2
             block_2:
-              %var_13 = phi i64 [0, %block_0], [7, %block_1]
-              %var_12 = phi i1 [true, %block_0], [false, %block_1]
+              %var_11 = phi i64 [0, %block_0], [7, %block_1]
               br i1 %var_0, label %block_3, label %block_4
             block_3:
               br label %block_5
             block_4:
               br label %block_5
             block_5:
-              %var_14 = phi i64 [11, %block_3], [12, %block_4]
-              %var_8 = mul i64 %var_14, 100
-              %var_10 = add i64 %var_8, %var_13
+              %var_12 = phi i64 [11, %block_3], [12, %block_4]
+              %var_8 = mul i64 %var_12, 100
+              %var_10 = add i64 %var_8, %var_11
               call void @__quantum__rt__int_record_output(i64 %var_10, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
@@ -1275,13 +1250,13 @@ fn evaluation_order_effectful_callable_or_replacement() {
               store i1 %var_0, ptr %var_2
               store i64 0, ptr %var_3
               %var_4 = load i1, ptr %var_2
-              br i1 %var_4, label %block_2, label %block_1
+              br i1 %var_4, label %block_1, label %block_2
             block_1:
-              store i64 7, ptr %var_3
-              br label %block_2
-            block_2:
               %var_14 = load i1, ptr %var_2
               br i1 %var_14, label %block_3, label %block_4
+            block_2:
+              store i64 7, ptr %var_3
+              br label %block_1
             block_3:
               store i64 11, ptr %var_6
               br label %block_5
@@ -1349,16 +1324,16 @@ fn evaluation_order_effectful_callable_and_assign_replacement() {
             block_1:
               br label %block_2
             block_2:
-              %var_14 = phi i64 [0, %block_0], [7, %block_1]
+              %var_13 = phi i64 [0, %block_0], [7, %block_1]
               br i1 %var_1, label %block_3, label %block_4
             block_3:
               br label %block_5
             block_4:
               br label %block_5
             block_5:
-              %var_15 = phi i64 [12, %block_3], [11, %block_4]
-              %var_10 = mul i64 %var_15, 100
-              %var_12 = add i64 %var_10, %var_14
+              %var_14 = phi i64 [12, %block_3], [11, %block_4]
+              %var_10 = mul i64 %var_14, 100
+              %var_12 = add i64 %var_10, %var_13
               call void @__quantum__rt__int_record_output(i64 %var_12, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
@@ -1420,15 +1395,15 @@ fn evaluation_order_effectful_callable_or_assign_replacement() {
               store i1 %var_2, ptr %var_0
               %var_7 = load i1, ptr %var_0
               store i1 true, ptr %var_8
-              br i1 %var_7, label %block_2, label %block_1
+              br i1 %var_7, label %block_1, label %block_2
             block_1:
-              store i64 7, ptr %var_5
-              store i1 false, ptr %var_8
-              br label %block_2
-            block_2:
               %var_6 = load i1, ptr %var_8
               %var_20 = load i1, ptr %var_0
               br i1 %var_20, label %block_3, label %block_4
+            block_2:
+              store i64 7, ptr %var_5
+              store i1 false, ptr %var_8
+              br label %block_1
             block_3:
               store i64 11, ptr %var_9
               br label %block_5
@@ -1451,17 +1426,17 @@ fn evaluation_order_effectful_callable_or_assign_replacement() {
             block_1:
               br label %block_2
             block_2:
-              %var_15 = phi i64 [0, %block_0], [7, %block_1]
-              %var_14 = phi i1 [true, %block_0], [false, %block_1]
+              %var_14 = phi i64 [0, %block_0], [7, %block_1]
+              %var_13 = phi i1 [true, %block_0], [false, %block_1]
               br i1 %var_1, label %block_3, label %block_4
             block_3:
               br label %block_5
             block_4:
               br label %block_5
             block_5:
-              %var_16 = phi i64 [11, %block_3], [12, %block_4]
-              %var_10 = mul i64 %var_16, 100
-              %var_12 = add i64 %var_10, %var_15
+              %var_15 = phi i64 [11, %block_3], [12, %block_4]
+              %var_10 = mul i64 %var_15, 100
+              %var_12 = add i64 %var_10, %var_14
               call void @__quantum__rt__int_record_output(i64 %var_12, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
@@ -1478,15 +1453,15 @@ fn evaluation_order_effectful_callable_or_assign_replacement() {
               store i1 %var_1, ptr %var_0
               %var_6 = load i1, ptr %var_0
               store i1 true, ptr %var_7
-              br i1 %var_6, label %block_2, label %block_1
+              br i1 %var_6, label %block_1, label %block_2
             block_1:
-              store i64 7, ptr %var_4
-              store i1 false, ptr %var_7
-              br label %block_2
-            block_2:
               %var_5 = load i1, ptr %var_7
               %var_19 = load i1, ptr %var_0
               br i1 %var_19, label %block_3, label %block_4
+            block_2:
+              store i64 7, ptr %var_4
+              store i1 false, ptr %var_7
+              br label %block_1
             block_3:
               store i64 11, ptr %var_8
               br label %block_5
@@ -1557,17 +1532,17 @@ fn evaluation_order_effectful_callable_saved_snapshot_replacement() {
             block_1:
               br label %block_2
             block_2:
-              %var_14 = phi i64 [0, %block_0], [7, %block_1]
+              %var_13 = phi i64 [0, %block_0], [7, %block_1]
               br i1 %var_0, label %block_3, label %block_4
             block_3:
               br label %block_5
             block_4:
               br label %block_5
             block_5:
-              %var_15 = phi i64 [12, %block_3], [11, %block_4]
-              %var_8 = mul i64 %var_15, 10000
+              %var_14 = phi i64 [12, %block_3], [11, %block_4]
+              %var_8 = mul i64 %var_14, 10000
               %var_10 = add i64 %var_8, 1100
-              %var_12 = add i64 %var_10, %var_14
+              %var_12 = add i64 %var_10, %var_13
               call void @__quantum__rt__int_record_output(i64 %var_12, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
               ret i64 0"#]],
         &expect![[r#"
@@ -1742,8 +1717,8 @@ fn evaluation_order_callable_captured_snapshot_reaches_qir() {
                 block_4:
                   br label %block_5
                 block_5:
-                  %var_11 = phi i64 [12, %block_3], [11, %block_4]
-                  %var_7 = mul i64 %var_11, 100
+                  %var_10 = phi i64 [12, %block_3], [11, %block_4]
+                  %var_7 = mul i64 %var_10, 100
                   %var_9 = add i64 %var_7, 11
                   call void @__quantum__rt__int_record_output(i64 %var_9, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
                   ret i64 0"#]],
@@ -2147,9 +2122,9 @@ fn measured_nested_tail_return_qir_selects_post_continuation_value() {
         block_1:
           br label %block_2
         block_2:
-          %var_17 = phi i1 [false, %block_0], [true, %block_1]
-          %var_16 = phi i64 [0, %block_0], [1, %block_1]
-          %var_11 = xor i1 %var_17, true
+          %var_17 = phi i64 [0, %block_0], [1, %block_1]
+          %var_16 = phi i1 [false, %block_0], [true, %block_1]
+          %var_11 = xor i1 %var_16, true
           br i1 %var_11, label %block_3, label %block_4
         block_3:
           br i1 %var_4, label %block_5, label %block_6
@@ -2158,13 +2133,13 @@ fn measured_nested_tail_return_qir_selects_post_continuation_value() {
         block_5:
           br label %block_6
         block_6:
-          %var_19 = phi i1 [%var_17, %block_3], [true, %block_5]
-          %var_18 = phi i64 [%var_16, %block_3], [9, %block_5]
+          %var_19 = phi i64 [%var_17, %block_3], [9, %block_5]
+          %var_18 = phi i1 [%var_16, %block_3], [true, %block_5]
           br label %block_7
         block_7:
-          %var_22 = phi i1 [%var_17, %block_4], [%var_19, %block_6]
-          %var_21 = phi i64 [%var_16, %block_4], [5, %block_6]
-          %var_20 = phi i64 [%var_16, %block_4], [%var_18, %block_6]
+          %var_22 = phi i1 [%var_16, %block_4], [%var_18, %block_6]
+          %var_21 = phi i64 [%var_17, %block_4], [5, %block_6]
+          %var_20 = phi i64 [%var_17, %block_4], [%var_19, %block_6]
           br i1 %var_22, label %block_8, label %block_9
         block_8:
           br label %block_10
@@ -2217,23 +2192,23 @@ fn measured_nested_tail_return_qir_selects_post_continuation_value() {
           %var_14 = xor i1 %var_21, true
           br i1 %var_14, label %block_5, label %block_6
         block_5:
-          br i1 %var_11, label %block_7, label %block_8
+          br i1 %var_11, label %block_7, label %block_9
         block_6:
           %var_22 = load i64, ptr %var_13
           store i64 %var_22, ptr %var_15
-          br label %block_9
+          br label %block_8
         block_7:
           store i64 9, ptr %var_13
           store i1 true, ptr %var_12
-          br label %block_8
-        block_8:
-          store i64 5, ptr %var_15
           br label %block_9
-        block_9:
+        block_8:
           %var_24 = load i64, ptr %var_15
           store i64 %var_24, ptr %var_16
           %var_26 = load i1, ptr %var_12
           br i1 %var_26, label %block_10, label %block_11
+        block_9:
+          store i64 5, ptr %var_15
+          br label %block_8
         block_10:
           %var_30 = load i64, ptr %var_13
           store i64 %var_30, ptr %var_17
@@ -3824,21 +3799,21 @@ fn deutsch_jozsa_sample_shape_generates_qir() {
         block_1:
           br label %block_2
         block_2:
-          %var_191 = phi i1 [true, %block_0], [false, %block_1]
+          %var_190 = phi i1 [true, %block_0], [false, %block_1]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 1 to %Qubit*), %Result* inttoptr (i64 1 to %Result*))
           %var_11 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 1 to %Result*))
           br i1 %var_11, label %block_3, label %block_4
         block_3:
           br label %block_4
         block_4:
-          %var_192 = phi i1 [%var_191, %block_2], [false, %block_3]
+          %var_191 = phi i1 [%var_190, %block_2], [false, %block_3]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 2 to %Qubit*), %Result* inttoptr (i64 2 to %Result*))
           %var_13 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 2 to %Result*))
           br i1 %var_13, label %block_5, label %block_6
         block_5:
           br label %block_6
         block_6:
-          %var_193 = phi i1 [%var_192, %block_4], [false, %block_5]
+          %var_192 = phi i1 [%var_191, %block_4], [false, %block_5]
           call void @__quantum__qis__reset__body(%Qubit* inttoptr (i64 3 to %Qubit*))
           call void @__quantum__qis__x__body(%Qubit* inttoptr (i64 3 to %Qubit*))
           call void @__quantum__qis__h__body(%Qubit* inttoptr (i64 3 to %Qubit*))
@@ -3855,21 +3830,21 @@ fn deutsch_jozsa_sample_shape_generates_qir() {
         block_7:
           br label %block_8
         block_8:
-          %var_194 = phi i1 [true, %block_6], [false, %block_7]
+          %var_193 = phi i1 [true, %block_6], [false, %block_7]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 1 to %Qubit*), %Result* inttoptr (i64 4 to %Result*))
           %var_28 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 4 to %Result*))
           br i1 %var_28, label %block_9, label %block_10
         block_9:
           br label %block_10
         block_10:
-          %var_195 = phi i1 [%var_194, %block_8], [false, %block_9]
+          %var_194 = phi i1 [%var_193, %block_8], [false, %block_9]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 2 to %Qubit*), %Result* inttoptr (i64 5 to %Result*))
           %var_30 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 5 to %Result*))
           br i1 %var_30, label %block_11, label %block_12
         block_11:
           br label %block_12
         block_12:
-          %var_196 = phi i1 [%var_195, %block_10], [false, %block_11]
+          %var_195 = phi i1 [%var_194, %block_10], [false, %block_11]
           call void @__quantum__qis__reset__body(%Qubit* inttoptr (i64 3 to %Qubit*))
           call void @__quantum__qis__x__body(%Qubit* inttoptr (i64 3 to %Qubit*))
           call void @__quantum__qis__h__body(%Qubit* inttoptr (i64 3 to %Qubit*))
@@ -3933,21 +3908,21 @@ fn deutsch_jozsa_sample_shape_generates_qir() {
         block_13:
           br label %block_14
         block_14:
-          %var_197 = phi i1 [true, %block_12], [false, %block_13]
+          %var_196 = phi i1 [true, %block_12], [false, %block_13]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 1 to %Qubit*), %Result* inttoptr (i64 7 to %Result*))
           %var_126 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 7 to %Result*))
           br i1 %var_126, label %block_15, label %block_16
         block_15:
           br label %block_16
         block_16:
-          %var_198 = phi i1 [%var_197, %block_14], [false, %block_15]
+          %var_197 = phi i1 [%var_196, %block_14], [false, %block_15]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 2 to %Qubit*), %Result* inttoptr (i64 8 to %Result*))
           %var_128 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 8 to %Result*))
           br i1 %var_128, label %block_17, label %block_18
         block_17:
           br label %block_18
         block_18:
-          %var_199 = phi i1 [%var_198, %block_16], [false, %block_17]
+          %var_198 = phi i1 [%var_197, %block_16], [false, %block_17]
           call void @__quantum__qis__reset__body(%Qubit* inttoptr (i64 3 to %Qubit*))
           call void @__quantum__qis__x__body(%Qubit* inttoptr (i64 3 to %Qubit*))
           call void @__quantum__qis__h__body(%Qubit* inttoptr (i64 3 to %Qubit*))
@@ -3991,27 +3966,27 @@ fn deutsch_jozsa_sample_shape_generates_qir() {
         block_19:
           br label %block_20
         block_20:
-          %var_200 = phi i1 [true, %block_18], [false, %block_19]
+          %var_199 = phi i1 [true, %block_18], [false, %block_19]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 1 to %Qubit*), %Result* inttoptr (i64 10 to %Result*))
           %var_184 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 10 to %Result*))
           br i1 %var_184, label %block_21, label %block_22
         block_21:
           br label %block_22
         block_22:
-          %var_201 = phi i1 [%var_200, %block_20], [false, %block_21]
+          %var_200 = phi i1 [%var_199, %block_20], [false, %block_21]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 2 to %Qubit*), %Result* inttoptr (i64 11 to %Result*))
           %var_186 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 11 to %Result*))
           br i1 %var_186, label %block_23, label %block_24
         block_23:
           br label %block_24
         block_24:
-          %var_202 = phi i1 [%var_201, %block_22], [false, %block_23]
+          %var_201 = phi i1 [%var_200, %block_22], [false, %block_23]
           call void @__quantum__qis__reset__body(%Qubit* inttoptr (i64 3 to %Qubit*))
           call void @__quantum__rt__array_record_output(i64 4, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
-          call void @__quantum__rt__bool_record_output(i1 zeroext %var_193, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @1, i64 0, i64 0))
-          call void @__quantum__rt__bool_record_output(i1 zeroext %var_196, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @2, i64 0, i64 0))
-          call void @__quantum__rt__bool_record_output(i1 zeroext %var_199, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @3, i64 0, i64 0))
-          call void @__quantum__rt__bool_record_output(i1 zeroext %var_202, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @4, i64 0, i64 0))
+          call void @__quantum__rt__bool_record_output(i1 zeroext %var_192, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @1, i64 0, i64 0))
+          call void @__quantum__rt__bool_record_output(i1 zeroext %var_195, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @2, i64 0, i64 0))
+          call void @__quantum__rt__bool_record_output(i1 zeroext %var_198, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @3, i64 0, i64 0))
+          call void @__quantum__rt__bool_record_output(i1 zeroext %var_201, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @4, i64 0, i64 0))
           ret i64 0
         }
 
@@ -4244,11 +4219,11 @@ fn explicit_return_tuple_keeps_dynamic_integer_output() {
         block_2:
           br label %block_3
         block_3:
-          %var_13 = phi i64 [1, %block_1], [2, %block_2]
+          %var_7 = phi i64 [1, %block_1], [2, %block_2]
           call void @__quantum__qis__mresetz__body(%Qubit* inttoptr (i64 1 to %Qubit*), %Result* inttoptr (i64 1 to %Result*))
           %var_6 = call zeroext i1 @__quantum__rt__read_result(%Result* inttoptr (i64 1 to %Result*))
           call void @__quantum__rt__tuple_record_output(i64 2, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
-          call void @__quantum__rt__int_record_output(i64 %var_13, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @1, i64 0, i64 0))
+          call void @__quantum__rt__int_record_output(i64 %var_7, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @1, i64 0, i64 0))
           call void @__quantum__rt__bool_record_output(i1 zeroext %var_6, i8* getelementptr inbounds ([6 x i8], [6 x i8]* @2, i64 0, i64 0))
           ret i64 0
         }
