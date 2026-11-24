@@ -228,6 +228,9 @@ The default command is `copilot --allow-all`.
 You can pass your own after `--`, for example `copilot --resume=SESSIONID --allow-all`.
 The `--` separator is required for custom commands; put all sandbox options, including `--instance`, before it.
 
+`--no-token` starts the workload without delivering a PAT, so it needs no token store and can't use Copilot or authenticated `gh`.
+It requires a custom command, for example `sandbox.py run --no-token -- bash`.
+
 When interrupted, the launcher requests a graceful workload shutdown and allows up to 30 seconds for exit and outbox sync before force-removing the container.
 A second interrupt during that wait forces removal immediately.
 
@@ -368,3 +371,29 @@ Host Git configuration updates are briefly serialized; this does not lock other 
 
 Use `sandbox.py delete --instance NAME` to confirm and delete an idle instance, including its volumes and saved PAT.
 Deletion does not need an image source or tag; exchange folders and already-fetched commits are retained.
+
+## CI Prototype
+
+[`copilot-sandbox-prototype.yml`](../../.github/workflows/copilot-sandbox-prototype.yml) is an experiment toward running the sandbox in GitHub Actions.
+It never runs Copilot and requests no Copilot permission.
+
+1. The build job sets up rootless Podman ([`ci/setup-podman.sh`](ci/setup-podman.sh)), builds the image pair with `build_images.py --package-source public`, and uploads it as one zstd-compressed artifact.
+1. The run job, on a fresh runner, loads the images and runs `sandbox.py run --local --no-token` with the requested command.
+   It uploads the sandbox's `/exchange/from_copilot` as the `sandbox-output` artifact.
+
+Each job's summary lists the duration of its main steps and the image sizes.
+The setup script also reports the host facts the sandbox depends on, such as Podman's version, network command, and cgroup delegation, and starts a container with the agent's restrictions before the long build.
+
+Inputs:
+
+- `runner`: `ubuntu-24.04` (Podman 4.9) or `ubuntu-26.04` (Podman 5.7).
+- `build-args`: `build.py` arguments whose dependencies the agent image bakes in.
+- `command`: a Bash command to run in the sandbox from `/work/qdk`, such as `cargo build --release -p qdk --lib` to time an offline build.
+- `relax-userns`: turns off Ubuntu's AppArmor restriction on unprivileged user namespaces, in case rootless Podman needs it.
+
+The workflow sets `cache-mode: none`, so it can't write the caches other workflows restore, and it keeps the runner from acting on workflow commands in sandbox output.
+The `sandbox-output` artifact is untrusted, like any other sandbox output.
+
+To run it in a fork, enable Actions on the fork's **Actions** tab.
+A manually dispatched workflow must exist on the default branch, so either make the prototype branch the fork's default or push the workflow file to its default branch.
+Then dispatch it from the Actions tab, or with `gh workflow run copilot-sandbox-prototype.yml --repo OWNER/qdk --ref BRANCH -f runner=ubuntu-24.04`.

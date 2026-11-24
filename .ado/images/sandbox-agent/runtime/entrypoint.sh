@@ -112,6 +112,10 @@ setup_chemistry_repo() {
 
 load_token() {
     local path=${1:-/tmp/qdk-sandbox/gh_token}
+    if [[ ${QDK_SANDBOX_NO_TOKEN:-} == 1 ]]; then
+        info 'Starting without a GitHub token, as the launcher requested.'
+        return 0
+    fi
     [[ -s $path ]] || { info 'The launcher must deliver the PAT before the workload starts.'; return 1; }
     COPILOT_GITHUB_TOKEN=$(<"$path")
     GH_TOKEN=$COPILOT_GITHUB_TOKEN

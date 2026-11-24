@@ -150,9 +150,10 @@ def _get_host_git_identity() -> dict[str, str]:
 
 
 def _make_agent_environment(
-    name: str, branch: str, sha: str, selected_branch: str
+    name: str, branch: str, sha: str, selected_branch: str, *, no_token: bool = False
 ) -> dict[str, str]:
     return {
+        **({"QDK_SANDBOX_NO_TOKEN": "1"} if no_token else {}),
         **_get_host_git_identity(),
         "HOME": "/home/agent",
         "USER": "agent",
@@ -260,9 +261,12 @@ def _run_session(
     ):
         raise LauncherError("--branch must be a valid Git branch name.")
     make_private_dir(directory)
-    store = TokenStore(args.instance, directory)
-    token = store.load()
-    validate_token_properties(token, instance=args.instance)
+    token = ""
+    if args.no_token:
+        print("Starting without a GitHub token; the workload can't use Copilot.")
+    else:
+        token = TokenStore(args.instance, directory).load()
+        validate_token_properties(token, instance=args.instance)
     if args.reuse:
         agent_id, proxy_id, build_id = get_reused_image_pair(
             config, engine.architecture, instance=args.instance
@@ -317,7 +321,7 @@ def _run_session(
         cpus=cpus,
         memory=memory,
         environment=_make_agent_environment(
-            args.instance, branch, sha, args.branch or ""
+            args.instance, branch, sha, args.branch or "", no_token=args.no_token
         ),
     )
     status = 1
@@ -347,18 +351,19 @@ def _run_session(
             )
         )
         verified_container = verify_boundary(session)
-        # Deliver the PAT over stdin into tmpfs: never in a command line, the environment, or on disk.
-        run(
-            podman(
-                "exec",
-                "-i",
-                "--user",
-                AGENT_USER,
-                verified_container,
-                "/opt/sandbox/runtime/receive-token",
-            ),
-            input_text=token,
-        )
+        if not args.no_token:
+            # Deliver the PAT over stdin into tmpfs: never in a command line, the environment, or on disk.
+            run(
+                podman(
+                    "exec",
+                    "-i",
+                    "--user",
+                    AGENT_USER,
+                    verified_container,
+                    "/opt/sandbox/runtime/receive-token",
+                ),
+                input_text=token,
+            )
         token = ""
         print("Sandbox boundary verified; starting workload.")
         arguments = ["copilot", "--allow-all"]
@@ -605,6 +610,11 @@ def make_argument_parser() -> argparse.ArgumentParser:
         help="Persist resource limits, image selection, and exchange paths for this instance",
     )
     launch.add_argument(
+        "--no-token",
+        action="store_true",
+        help="Deliver no GitHub token, so the workload can't use Copilot; requires a command after --",
+    )
+    launch.add_argument(
         "--to-copilot-dir", help="Relocate the read-only context exchange directory"
     )
     launch.add_argument(
@@ -634,6 +644,10 @@ def main(argv: list[str] | None = None) -> int:
             )
         if len(args.command) == 1:
             parser.error("Expected a command after '--'.")
+    if args.action == "run" and args.no_token and not args.command:
+        parser.error(
+            "--no-token requires a command after '--'; Copilot needs a token."
+        )
     try:
         if args.action == "shell":
             return _open_shell_on_existing_session(args.instance)

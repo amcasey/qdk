@@ -1,0 +1,124 @@
+# Prototype: builds the Copilot sandbox images on a GitHub-hosted runner, moves them to a fresh
+# runner, and runs a command in the verified sandbox there. It never runs Copilot and requests
+# no Copilot permission. It exists to measure timings and find what breaks on hosted runners.
+# See tools/copilot-sandbox/README.md#ci-prototype.
+name: Copilot sandbox prototype
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: GitHub-hosted runner image
+        type: choice
+        options:
+          - ubuntu-24.04
+          - ubuntu-26.04
+        default: ubuntu-24.04
+      build-args:
+        description: build.py arguments whose dependencies the agent image bakes in (blank for the default)
+        type: string
+        default: --qdk --cli
+      command:
+        description: Bash command to run in the sandbox, from /work/qdk
+        type: string
+        default: echo "hello, world" > /exchange/from_copilot/report.md
+      relax-userns:
+        description: Turn off Ubuntu's AppArmor restriction on unprivileged user namespaces
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Never restore or save Actions caches: a dispatch on the default branch could otherwise write to
+# the caches that every CI run restores.
+cache-mode: none
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  RUNNER_LABEL: ${{ inputs.runner }}
+  RELAX_USERNS: ${{ inputs.relax-userns }}
+
+jobs:
+  build:
+    name: Build sandbox images
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up rootless Podman
+        run: |
+          echo "### Build on $RUNNER_LABEL" >> "$GITHUB_STEP_SUMMARY"
+          tools/copilot-sandbox/ci/timed.sh "Set up Podman" tools/copilot-sandbox/ci/setup-podman.sh "$RELAX_USERNS"
+      - name: Build images
+        env:
+          BUILD_ARGS: ${{ inputs.build-args }}
+        run: |
+          read -ra build_args <<< "$BUILD_ARGS"
+          arguments=(--package-source public)
+          if ((${#build_args[@]})); then
+            arguments+=(-- "${build_args[@]}")
+          fi
+          tools/copilot-sandbox/ci/timed.sh "Build images" python3 tools/copilot-sandbox/build_images.py "${arguments[@]}"
+      - name: Export images
+        run: tools/copilot-sandbox/ci/timed.sh "Save and compress images" tools/copilot-sandbox/ci/export-images.sh "$SANDBOX_SCRATCH/images"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sandbox-images
+          path: ${{ env.SANDBOX_SCRATCH }}/images
+          # Already zstd-compressed.
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
+  run:
+    name: Run in the sandbox
+    needs: build
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # A full history, as a review needs, so the sandbox's clone of the seed is realistic.
+          fetch-depth: 0
+      - name: Set up rootless Podman
+        run: |
+          echo "### Run on $RUNNER_LABEL" >> "$GITHUB_STEP_SUMMARY"
+          tools/copilot-sandbox/ci/timed.sh "Set up Podman" tools/copilot-sandbox/ci/setup-podman.sh "$RELAX_USERNS"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sandbox-images
+          path: ${{ env.SANDBOX_SCRATCH }}/images
+      - name: Load images
+        run: |
+          tools/copilot-sandbox/ci/timed.sh "Decompress and load images" \
+            bash -c 'set -o pipefail; zstd -dc "$1" | podman load' load "$SANDBOX_SCRATCH/images/images.tar.zst"
+      - name: Run the command in the sandbox
+        env:
+          SANDBOX_COMMAND: ${{ inputs.command }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/exchange/to_copilot" "$RUNNER_TEMP/exchange/from_copilot"
+          # Sandbox output reaches this log; stop the runner from acting on workflow commands in it.
+          resume=$(python3 -c 'import secrets; print(secrets.token_hex(16))')
+          echo "::stop-commands::$resume"
+          status=0
+          tools/copilot-sandbox/ci/timed.sh "Sandbox session" python3 tools/copilot-sandbox/sandbox.py run \
+            --local --no-token --instance ci \
+            --to-copilot-dir "$RUNNER_TEMP/exchange/to_copilot" \
+            --from-copilot-dir "$RUNNER_TEMP/exchange/from_copilot" \
+            -- bash -c "$SANDBOX_COMMAND" || status=$?
+          echo "::$resume::"
+          exit "$status"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: sandbox-output
+          path: ${{ runner.temp }}/exchange/from_copilot
+          retention-days: 7
+          if-no-files-found: warn
