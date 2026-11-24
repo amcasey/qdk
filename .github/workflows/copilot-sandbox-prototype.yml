@@ -41,6 +41,8 @@ defaults:
 env:
   RUNNER_LABEL: ${{ inputs.runner }}
   RELAX_USERNS: ${{ inputs.relax-userns }}
+  # Keeps the launcher's progress lines in order with sandbox output, so log timestamps are accurate.
+  PYTHONUNBUFFERED: "1"
 
 jobs:
   build:
@@ -75,6 +77,9 @@ jobs:
           compression-level: 0
           retention-days: 1
           if-no-files-found: error
+      - name: Report disk use
+        if: always() && env.SANDBOX_SCRATCH != ''
+        run: tools/copilot-sandbox/ci/disk-report.sh
 
   run:
     name: Run in the sandbox
@@ -122,3 +127,6 @@ jobs:
           path: ${{ runner.temp }}/exchange/from_copilot
           retention-days: 7
           if-no-files-found: warn
+      - name: Report disk use
+        if: always() && env.SANDBOX_SCRATCH != ''
+        run: tools/copilot-sandbox/ci/disk-report.sh

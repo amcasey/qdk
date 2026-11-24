@@ -10,7 +10,6 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 group() { printf '::group::%s\n' "$1"; }
 endgroup() { printf '::endgroup::\n'; }
-available() { df --output=avail -B1 "$1" | tail -n 1; }
 
 group "Host"
 uname -a
@@ -49,22 +48,32 @@ if ! grep -q "^$USER:" /etc/subuid || ! grep -q "^$USER:" /etc/subgid; then
 fi
 endgroup
 
-# Storage must be configured before Podman first initializes it.
+# Storage must be configured before Podman first initializes it. It stays on the runner's
+# temporary directory: plan against the documented runner SSD, not any extra space a host has.
 group "Storage"
 scratch=$RUNNER_TEMP/sandbox
-if [[ -d /mnt ]] && (($(available /mnt) > $(available "$HOME"))); then
-    scratch=/mnt/sandbox
-    sudo install -d -o "$USER" -g "$(id -gn)" "$scratch"
-fi
 mkdir -p "$scratch/storage" "$scratch/tmp" "$HOME/.config/containers"
 printf '[storage]\ndriver = "overlay"\ngraphroot = "%s"\n' "$scratch/storage" \
     > "$HOME/.config/containers/storage.conf"
+baseline=$(df --output=used -B1 "$scratch" | tail -n 1)
 {
     echo "SANDBOX_SCRATCH=$scratch"
-    # Buildah stages layers in TMPDIR, which defaults to the smaller root disk.
+    echo "SANDBOX_DISK_BASELINE=$baseline"
+    # Buildah stages layers in TMPDIR.
     echo "TMPDIR=$scratch/tmp"
 } >> "$GITHUB_ENV"
 echo "Podman storage: $scratch/storage"
+# Record the peak disk use until the job ends; disk-report.sh reads it.
+nohup bash -c '
+peak=0
+while :; do
+    used=$(df --output=used -B1 "$1" | tail -n 1)
+    if ((used > peak)); then
+        peak=$used
+        echo "$peak" > "$2.tmp" && mv "$2.tmp" "$2"
+    fi
+    sleep 2
+done' sampler "$scratch" "$scratch/disk-peak" > /dev/null 2>&1 &
 endgroup
 
 # Rootless resource limits such as --pids-limit need cgroup delegation from a systemd user session.

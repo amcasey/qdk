@@ -381,7 +381,7 @@ It never runs Copilot and requests no Copilot permission.
 1. The run job, on a fresh runner, loads the images and runs `sandbox.py run --local --no-token` with the requested command.
    It uploads the sandbox's `/exchange/from_copilot` as the `sandbox-output` artifact.
 
-Each job's summary lists the duration of its main steps and the image sizes.
+Each job's summary lists the duration of its main steps, the image sizes, and the job's peak disk use against the 14 GB of SSD GitHub documents for standard runners.
 The setup script also reports the host facts the sandbox depends on, such as Podman's version, network command, and cgroup delegation, and starts a container with the agent's restrictions before the long build.
 
 Inputs:
