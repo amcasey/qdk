@@ -151,21 +151,34 @@ def unarchive_safe(stream: IO[bytes], destination: Path) -> None:
                 raise BuildError("Archive links and special files are not accepted.")
 
 
-def snapshot_repo(repo: Path, destination: Path) -> str:
-    if run_command(
-        ["git", "-C", str(repo), "status", "--porcelain"], capture=True
-    ).strip():
-        print(
-            "Warning: only committed HEAD is exported; working-tree changes are excluded.",
-            file=sys.stderr,
-        )
+def resolve_commit(repo: Path, revision: str) -> str:
+    if revision.startswith("-"):
+        raise BuildError(f"Invalid revision: {revision}")
     commit = (
-        run_command(["git", "-C", str(repo), "rev-parse", "HEAD"], capture=True)
+        run_command(
+            ["git", "-C", str(repo), "rev-parse", "--verify", revision + "^{commit}"],
+            capture=True,
+        )
         .decode()
         .strip()
     )
     if not re.fullmatch(r"[0-9a-f]{40,64}", commit):
-        raise BuildError("Invalid source commit.")
+        raise BuildError(f"Invalid commit for {revision}.")
+    return commit
+
+
+def snapshot_repo(repo: Path, destination: Path, revision: str = "HEAD") -> str:
+    if (
+        revision == "HEAD"
+        and run_command(
+            ["git", "-C", str(repo), "status", "--porcelain"], capture=True
+        ).strip()
+    ):
+        print(
+            "Warning: only committed HEAD is exported; working-tree changes are excluded.",
+            file=sys.stderr,
+        )
+    commit = resolve_commit(repo, revision)
     with tempfile.TemporaryFile() as archive:
         run_command(
             ["git", "-C", str(repo), "archive", "--format=tar", commit], stdout=archive
@@ -316,6 +329,13 @@ def build_images(args: argparse.Namespace) -> None:
         # Remote Podman makes the context root 0700, so the Dockerfile mounts this subdirectory.
         source = root / "qdk-context" / "qdk"
         commit = snapshot_repo(repo, source)
+        # Other revisions a review compares; the image gets their crates too. Always present, so
+        # the Dockerfile's mount has a source even when there are none.
+        extra = root / "qdk-context" / "extra-deps"
+        extra.mkdir()
+        for index, revision in enumerate(args.extra_deps_revision):
+            extra_commit = snapshot_repo(repo, extra / str(index), revision)
+            print(f"Also fetching crates for {revision} ({extra_commit[:12]}).")
         for target in args.target:
             context = root / target
             stage_docker_build_context(
@@ -448,6 +468,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Registry prefix for pipeline image names; omitted for local images.",
     )
     parser.add_argument("--tag", default=LOCAL_IMAGE_TAG)
+    parser.add_argument(
+        "--extra-deps-revision",
+        action="append",
+        default=[],
+        metavar="REVISION",
+        help="Also fetch the crates of this revision's Cargo.lock, such as a review's other end (repeatable)",
+    )
     parser.add_argument(
         "build_args",
         nargs=argparse.REMAINDER,

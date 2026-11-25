@@ -306,6 +306,10 @@ The image's verify stage then builds the QDK once, without network access, using
 The build arguments decide which dependencies get installed, so `--no-test` also leaves out test dependencies such as `pyqir`.
 Don't pass `--deps-only` yourself; the verify stage would then check nothing.
 
+To compare revisions offline, such as both ends of a review, add `--extra-deps-revision REVISION` (repeatable).
+The image then also gets the crates of each revision's `Cargo.lock`, fetched with `cargo fetch`, which runs no package code; the verify stage confirms them with an offline fetch.
+Toolchains and Python packages still come only from the checked-out revision.
+
 If you want to support more or less of the repo, you can pass your own build arguments:
 
 ```sh
@@ -405,7 +409,9 @@ Inputs:
 
 - `runner`: `ubuntu-24.04` (Podman 4.9) or `ubuntu-26.04` (Podman 5.7).
 - `build-args`: `build.py` arguments whose dependencies the agent image installs (see [Local (Public Feeds)](#local-public-feeds)). `qdk`'s runtime dependency `pyqir` comes with the test dependencies, so avoid `--no-test` if the sandbox will run `qdk` Python code.
+- `extra-deps-revisions`: other revisions, separated by spaces, whose crates the image also gets (`build_images.py --extra-deps-revision`).
 - `command`: a Bash command to run in the sandbox from `/work/qdk`, such as `cargo build --release -p qdk --lib` to time an offline build.
+  [`ci/build-revisions.sh`](ci/build-revisions.sh) `REVISION...` builds each revision offline the way the review kit does and writes timings, warnings and disk use to `build-revisions.md` in the output.
 - `relax-userns`: turns off Ubuntu's AppArmor restriction on unprivileged user namespaces, in case rootless Podman needs it.
 
 The workflow sets `cache-mode: none`, so it can't write the caches other workflows restore, and it keeps the runner from acting on workflow commands in sandbox output.

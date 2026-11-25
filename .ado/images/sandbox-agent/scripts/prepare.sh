@@ -67,3 +67,4 @@ npm ci --ignore-scripts --no-audit --no-fund
 ./node_modules/.bin/copilot --version
 # Only download dependencies; the image's verify stage proves an offline build with them.
 bash /opt/sandbox/scripts/build_qdk.sh --deps-only
+bash /opt/sandbox/scripts/fetch_extra_crates.sh

@@ -47,6 +47,7 @@ RUN --mount=type=bind,from=qdk,source=qdk/.ado/images/install-msrustup.sh,target
 # Set up feeds, install the Copilot CLI, and build the QDK (by default, not the whole repo)
 FROM tools AS prepared
 RUN --mount=type=bind,from=qdk,source=qdk,target=/qdk,readonly \
+    --mount=type=bind,from=qdk,source=extra-deps,target=/extra-deps,readonly \
     --mount=type=secret,id=npmrc \
     --mount=type=secret,id=pip_index_url \
     --mount=type=secret,id=cargo_token \
@@ -90,11 +91,14 @@ WORKDIR /work
 # Make sure the QDK still builds locked down
 FROM runtime-base AS verify
 # One real build, offline, proves prepare downloaded enough. QDK_BUILD_ARGS chose which
-# dependencies to install; running the tests here would only slow the image build.
+# dependencies to install; running the tests here would only slow the image build. Other
+# revisions only need their crates, which an offline fetch confirms without building.
 RUN --network=none --mount=type=bind,from=qdk,source=qdk,target=/qdk,readonly \
+    --mount=type=bind,from=qdk,source=extra-deps,target=/extra-deps,readonly \
     bash -c 'source /opt/sandbox/runtime/entrypoint.sh; verify_policy' \
     && /opt/qdk-venv/bin/qir-runner --version \
     && bash /opt/sandbox/scripts/build_qdk.sh --no-test --no-check \
+    && bash /opt/sandbox/scripts/fetch_extra_crates.sh --offline \
     && printf '%s --no-test --no-check\n' "$QDK_BUILD_ARGS" > /tmp/offline-verified \
     && chmod 0444 /tmp/offline-verified
 
