@@ -5,8 +5,6 @@
 set -euo pipefail
 
 relax_userns=${1:-false}
-# Experiment: fuse-overlayfs presents image layers under another ID mapping without copying them.
-fuse_overlayfs=${2:-false}
 uid=$(id -u)
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
@@ -39,9 +37,6 @@ for tool in newuidmap:uidmap slirp4netns:slirp4netns pasta:passt zstd:zstd; do
 done
 # Podman's systemd cgroup manager talks to the user session over D-Bus.
 [[ -e /usr/lib/systemd/user/dbus.socket ]] || missing+=(dbus-user-session)
-if [[ $fuse_overlayfs == true ]] && ! command -v fuse-overlayfs >/dev/null; then
-    missing+=(fuse-overlayfs)
-fi
 if ((${#missing[@]})); then
     sudo apt-get update -qq
     sudo apt-get install -y -qq --no-install-recommends "${missing[@]}"
@@ -60,11 +55,6 @@ scratch=$RUNNER_TEMP/sandbox
 mkdir -p "$scratch/storage" "$HOME/.config/containers"
 printf '[storage]\ndriver = "overlay"\ngraphroot = "%s"\n' "$scratch/storage" \
     > "$HOME/.config/containers/storage.conf"
-if [[ $fuse_overlayfs == true ]]; then
-    printf '[storage.options.overlay]\nmount_program = "%s"\n' "$(command -v fuse-overlayfs)" \
-        >> "$HOME/.config/containers/storage.conf"
-    echo "Using fuse-overlayfs."
-fi
 baseline=$(df --output=used -B1 "$scratch" | tail -n 1)
 # Leave TMPDIR alone: the crun with Podman 5.7 (ubuntu-26.04) puts mount points there, and a
 # TMPDIR under /home/runner is out of reach of containers that don't map the runner's user,

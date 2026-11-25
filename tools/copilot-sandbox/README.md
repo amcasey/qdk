@@ -393,12 +393,12 @@ Inputs:
 - `build-args`: `build.py` arguments whose dependencies the agent image installs (see [Local (Public Feeds)](#local-public-feeds)). `qdk`'s runtime dependency `pyqir` comes with the test dependencies, so avoid `--no-test` if the sandbox will run `qdk` Python code.
 - `command`: a Bash command to run in the sandbox from `/work/qdk`, such as `cargo build --release -p qdk --lib` to time an offline build.
 - `relax-userns`: turns off Ubuntu's AppArmor restriction on unprivileged user namespaces, in case rootless Podman needs it.
-- `fuse-overlayfs`: in the run job, stores images with fuse-overlayfs.
-  With native overlay, Podman copies the agent image for its `--userns=keep-id` mapping: on ubuntu-24.04 that took about 4 GB and 27 s per run.
-  fuse-overlayfs presents the layers under the new mapping without copying them.
 
 The workflow sets `cache-mode: none`, so it can't write the caches other workflows restore, and it keeps the runner from acting on workflow commands in sandbox output.
 The `sandbox-output` artifact is untrusted, like any other sandbox output.
+
+With the kernel's overlay storage, rootless Podman copies the agent image to apply its `--userns=keep-id` mapping.
+On ubuntu-24.04 the copy took about 27 s and 4 GB of disk each run.
 
 To run it in a fork, enable Actions on the fork's **Actions** tab.
 A manually dispatched workflow must exist on the default branch, so either make the prototype branch the fork's default or push the workflow file to its default branch.
