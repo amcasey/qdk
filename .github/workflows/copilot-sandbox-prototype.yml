@@ -113,23 +113,21 @@ jobs:
         env:
           SANDBOX_COMMAND: ${{ inputs.command }}
         run: |
-          mkdir -p "$RUNNER_TEMP/exchange/to_copilot" "$RUNNER_TEMP/exchange/from_copilot"
+          # The launcher copies the agent's output volume here when the session ends.
+          echo "SANDBOX_OUTPUT=$HOME/qdk-copilot-sandbox/ci/from_copilot" >> "$GITHUB_ENV"
           # Sandbox output reaches this log; stop the runner from acting on workflow commands in it.
           resume=$(python3 -c 'import secrets; print(secrets.token_hex(16))')
           echo "::stop-commands::$resume"
           status=0
           tools/copilot-sandbox/ci/timed.sh "Sandbox session" python3 tools/copilot-sandbox/sandbox.py run \
-            --local --no-token --instance ci \
-            --to-copilot-dir "$RUNNER_TEMP/exchange/to_copilot" \
-            --from-copilot-dir "$RUNNER_TEMP/exchange/from_copilot" \
-            -- bash -c "$SANDBOX_COMMAND" || status=$?
+            --local --no-token --instance ci -- bash -c "$SANDBOX_COMMAND" || status=$?
           echo "::$resume::"
           exit "$status"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
+        if: always() && env.SANDBOX_OUTPUT != ''
         with:
           name: sandbox-output
-          path: ${{ runner.temp }}/exchange/from_copilot
+          path: ${{ env.SANDBOX_OUTPUT }}
           retention-days: 7
           if-no-files-found: warn
       - name: Report disk use

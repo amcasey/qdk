@@ -118,8 +118,13 @@ endgroup
 
 # The restrictions the launcher applies to the agent, on the base image the build uses.
 group "Smoke test"
+# The agent's identity mapping: all of rootless Podman's IDs, unshifted (see lib/layout.py).
+ids=$(podman info --format json | python3 -c '
+import json, sys
+mappings = json.load(sys.stdin)["host"]["idMappings"]
+print(min(sum(entry["size"] for entry in mappings[kind]) for kind in ("uidmap", "gidmap")))')
 podman run --rm --pull=missing --network=none --pids-limit=64 --cap-drop=ALL \
     --security-opt=no-new-privileges --security-opt="seccomp=$here/../seccomp.json" \
-    --userns=keep-id:uid=1000,gid=1000 --user 1000:1000 \
+    --uidmap="0:0:$ids" --gidmap="0:0:$ids" --user 1000:1000 \
     mcr.microsoft.com/azurelinux/base/core:3.0 sh -c 'echo "Restricted container: uid $(id -u)"'
 endgroup
